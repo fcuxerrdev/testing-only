@@ -257,18 +257,47 @@ Env.HardLag = function()
     loadAnim("http{99D7D2D0-F9D0-7774-8A7E-808B2E485607} ï¼108547486427358ï¼128564458016055ï¼111133097645102ï¼118859282718860ï¼116688450587693=132120738166011")
     loadAnim("http{3EA35148-CED7-3C71-6C79-FE5E0A237B70} ï¼108547486427358ï¼128564458016055ï¼111133097645102ï¼118859282718860ï¼116688450587693=132120738166011")
     loadAnim("http{74EEFE28-4C1F-7108-536F-81044F5266E2} ï¼108547486427358ï¼128564458016055ï¼111133097645102ï¼118859282718860ï¼116688450587693=132120738166011")
-    loadAnim("http{74EEFE28-4C1F-7108-536F-81044F5266E2} ï¼108547486427358ï¼128564458016055ï¼111133097645102ï¼118859282718860ï¼116688450587693=132120738166011")
-    loadAnim("http{74EEFE28-4C1F-7108-536F-81044F5266E2} ï¼108547486427358ï¼128564458016055ï¼111133097645102ï¼118859282718860ï¼116688450587693=132120738166011")
-    loadAnim("http{74EEFE28-4C1F-7108-536F-81044F5266E2} ï¼108547486427358ï¼128564458016055ï¼111133097645102ï¼118859282718860ï¼116688450587693=132120738166011")
-    loadAnim("http{74EEFE28-4C1F-7108-536F-81044F5266E2} ï¼108547486427358ï¼128564458016055ï¼111133097645102ï¼118859282718860ï¼116688450587693=132120738166011")
-    loadAnim("http{74EEFE28-4C1F-7108-536F-81044F5266E2} ï¼108547486427358ï¼128564458016055ï¼111133097645102ï¼118859282718860ï¼116688450587693=132120738166011")
-    loadAnim("http{74EEFE28-4C1F-7108-536F-81044F5266E2} ï¼108547486427358ï¼128564458016055ï¼111133097645102ï¼118859282718860ï¼116688450587693=132120738166011")
-    loadAnim("http{74EEFE28-4C1F-7108-536F-81044F5266E2} ï¼108547486427358ï¼128564458016055ï¼111133097645102ï¼118859282718860ï¼116688450587693=132120738166011")
-    loadAnim("http{74EEFE28-4C1F-7108-536F-81044F5266E2} ï¼108547486427358ï¼128564458016055ï¼111133097645102ï¼118859282718860ï¼116688450587693=132120738166011")
-    loadAnim("http{74EEFE28-4C1F-7108-536F-81044F5266E2} ï¼108547486427358ï¼128564458016055ï¼111133097645102ï¼118859282718860ï¼116688450587693=132120738166011")
-    loadAnim("http{74EEFE28-4C1F-7108-536F-81044F5266E2} ï¼108547486427358ï¼128564458016055ï¼111133097645102ï¼118859282718860ï¼116688450587693=132120738166011")
-    loadAnim("http{74EEFE28-4C1F-7108-536F-81044F5266E2} ï¼108547486427358ï¼128564458016055ï¼111133097645102ï¼118859282718860ï¼116688450587693=132120738166011")
-    loadAnim("http{74EEFE28-4C1F-7108-536F-81044F5266E2} ï¼108547486427358ï¼128564458016055ï¼111133097645102ï¼118859282718860ï¼116688450587693=132120738166011")
+end
+
+Env.AntiLag = function()
+    local Terrain = workspace:FindFirstChildWhichIsA("Terrain")
+    if Terrain then
+        Terrain.WaterWaveSize = 0
+        Terrain.WaterWaveSpeed = 0
+        Terrain.WaterReflectance = 0
+        Terrain.WaterTransparency = 1
+    end
+    Lighting.GlobalShadows = false
+    Lighting.FogEnd = 9e9
+    Lighting.FogStart = 9e9
+    settings().Rendering.QualityLevel = 1
+    for _, v in pairs(game:GetDescendants()) do
+        if v:IsA("BasePart") then
+            v.CastShadow = false
+            v.Material = Enum.Material.Plastic
+            v.Reflectance = 0
+        elseif v:IsA("Decal") then
+            v.Transparency = 1
+            v.Texture = ""
+        elseif v:IsA("ParticleEmitter") or v:IsA("Trail") then
+            v.Lifetime = NumberRange.new(0)
+        end
+    end
+    for _, v in pairs(Lighting:GetDescendants()) do
+        if v:IsA("PostEffect") then
+            v.Enabled = false
+        end
+    end
+    workspace.DescendantAdded:Connect(function(child)
+        task.spawn(function()
+            if child:IsA("ForceField") or child:IsA("Sparkles") or child:IsA("Smoke") or child:IsA("Fire") or child:IsA("Beam") then
+                RunService.Heartbeat:Wait()
+                child:Destroy()
+            elseif child:IsA("BasePart") then
+                child.CastShadow = false
+            end
+        end)
+    end)
 end
 
 -- שאר הקוד של הGUI נשאר בדיוק כמו בקוד הקודם שלי (החל מ"-- GUI" ועד הסוף)
@@ -292,7 +321,56 @@ Frame.BackgroundTransparency = 0.2
 Frame.BorderSizePixel = 0
 Frame.Parent = ScreenGui
 
+local function MakeDraggable(obj)
+    local dragging, dragInput, dragStart, startPos
+    local function update(input)
+        local delta = input.Position - dragStart
+        obj.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+    obj.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = obj.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+    obj.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            dragInput = input
+        end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            update(input)
+        end
+    end)
+end
+MakeDraggable(Frame)
+
 -- (כל שאר אובייקטי הGUI בדיוק כמו בגרסה הקודמת - אני לא חוזר עליהם כאן כדי לחסוך מקום, אבל הם זהים)
+
+local LangButton = Instance.new("TextButton")
+LangButton.Name = "AntiLagButton"
+LangButton.Size = UDim2.new(0, 240, 0, 30)
+LangButton.Position = UDim2.new(0, 10, 0, 10) -- Positioned at the top
+LangButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+LangButton.BorderSizePixel = 0
+LangButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+LangButton.Text = "Anti Lag (Low Graphics)"
+LangButton.Font = Enum.Font.SourceSansBold
+LangButton.TextSize = 16
+LangButton.Parent = Frame
+
+LangButton.MouseButton1Click:Connect(function()
+    LangButton.Text = "Anti Lag Enabled"
+    LangButton.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
+    Env.AntiLag()
+end)
 
 -- הפעלה עם מקש F או כפתור
 local activationKey = Enum.KeyCode.F
